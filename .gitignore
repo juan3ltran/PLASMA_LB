@@ -1,6 +1,9 @@
 /.vscode
 *.o
 *.dat
+*.gif
+*.jpg
 *.x
+*.gp
 *pruebas.cpp
 *.out

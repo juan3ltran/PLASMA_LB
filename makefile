@@ -22,4 +22,4 @@ vector.o: vector.cpp
 
 # Objetivo para limpiar los archivos generados
 clean:
-	rm -f *.o *.x *.dat
+	rm -f *.o *.x *.out
