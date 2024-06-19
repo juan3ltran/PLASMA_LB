@@ -3,8 +3,8 @@
 #include "vector.hpp"
 
 
-const int Lx = 1;   // XXXXXXXXXXXXXXXXXXXX
-const int Ly = 10;   //Para valores grandes de esto la simulacion usa mucha memoria
+const int Lx = 128;   // XXXXXXXXXXXXXXXXXXXX
+const int Ly = 32;   //Para valores grandes de esto la simulacion usa mucha memoria
 const int Lz = 1; //
 const double m0=1.0,m1=1820,q0=-1.0,q1=1.0;
 const double nu=100;  
@@ -12,7 +12,7 @@ const double g=0.25;
 const double mu0=1.0;
 const double Gamma=1.0;
 const double xi = 0.5;
-const double taus = 1.0;
+const double taus = 0.55;
 const double tau2 = 0.5;
 
 class LatticeBoltzmann{
@@ -57,7 +57,7 @@ class LatticeBoltzmann{
         void Start(double rho0, vector3D Vmed0);
         void Advection(void);
         void Collision(void);
-        void ImposeFields(vector3D Ufan);
+        void ImposeFields(void);
 
         //Extract data
         void Print(const char * NameFile);
@@ -234,7 +234,7 @@ vector3D LatticeBoltzmann::V_s_med(int ix, int iy, int iz, int s, double& rho_s,
     vector3D VS, FS;
     VS = LatticeBoltzmann::V_s(ix,iy,iz,s,rho_s,use_new);
     FS = LatticeBoltzmann::F_s(ix,iy,iz,s,use_new);
-    return VS + 0.5*FS/rho_s;
+    return VS;// + 0.5*FS/rho_s;
 }
 
 vector3D LatticeBoltzmann::E_med(int ix, int iy, int iz, bool use_new){
@@ -269,10 +269,10 @@ void LatticeBoltzmann::Advection(void){
                     for(int i=0; i<6;i++){
                         ixnew=(ix+V[0][p][i]+Lx)%Lx; iynew=(iy+V[1][p][i]+Ly)%Ly; iznew=(iz+V[2][p][i]+Lz)%Lz;
                         for(int s_j=0;s_j<2;s_j++){
-                            if (i<4){
-                                G[nG(ixnew,iynew,iznew,p,i,s_j)] = G_new[nG(ix,iy,iz,p,i,s_j)];
-                                G_0[ng0(ix,iy,iz)] = G_0_new[ng0(ix,iy,iz)];
-                            }
+                           // if (i<4){
+                                //G[nG(ixnew,iynew,iznew,p,i,s_j)] = G_new[nG(ix,iy,iz,p,i,s_j)];
+                                //G_0[ng0(ix,iy,iz)] = G_0_new[ng0(ix,iy,iz)];
+                            //}
                             f[nf(ixnew,iynew,iznew,p,i,s_j)] = f_new[nf(ix,iy,iz,p,i,s_j)];
                             f_0[nf0(ix,iy,iz,s_j)] = f_0_new[nf0(ix,iy,iz,s_j)];
                         }                        
@@ -289,26 +289,26 @@ void LatticeBoltzmann::Collision(void){
     for(int ix=0; ix<Lx ; ix++){
         for(int iy=0; iy<Ly ; iy++){
             for(int iz=0; iz<Lz ; iz++){
-                E0 = LatticeBoltzmann::E_med(ix,iy,iz,false); 
-                B0 = LatticeBoltzmann::B(ix,iy,iz,false);  
-                GEQ0 = LatticeBoltzmann::Geq0();
-                G_0_new[ng0(ix,iy,iz)] = G_0[ng0(ix,iy,iz)] - (1/tau2)*(G_0[ng0(ix,iy,iz)]-GEQ0);              
+                //E0 = LatticeBoltzmann::E_med(ix,iy,iz,false); 
+                //B0 = LatticeBoltzmann::B(ix,iy,iz,false);  
+                //GEQ0 = LatticeBoltzmann::Geq0();
+                //G_0_new[ng0(ix,iy,iz)] = G_0[ng0(ix,iy,iz)] - (1/tau2)*(G_0[ng0(ix,iy,iz)]-GEQ0);              
                  for(int p=0;p<3;p++){
                     for(int i=0; i<6;i++){
                         for(int s_j=0;s_j<2;s_j++){
                             if (i<4){
-                               Jmed0 = LatticeBoltzmann::J_med(ix,iy,iz,false);
-                               GEQ = LatticeBoltzmann::Geq(E0,B0,p,i,s_j);
-                               G_new[nG(ix,iy,iz,p,i,s_j)] = G[nG(ix,iy,iz,p,i,s_j)] + ((2*tau2-1)/(16*tau2))*mu0*e[p][i][s_j]*Jmed0 - (1/tau2)*(G[nG(ix,iy,iz,p,i,s_j)]-GEQ);
+                               //Jmed0 = LatticeBoltzmann::J_med(ix,iy,iz,false);
+                               //GEQ = LatticeBoltzmann::Geq(E0,B0,p,i,s_j);
+                               //G_new[nG(ix,iy,iz,p,i,s_j)] = G[nG(ix,iy,iz,p,i,s_j)] + ((2*tau2-1)/(16*tau2))*mu0*e[p][i][s_j]*Jmed0 - (1/tau2)*(G[nG(ix,iy,iz,p,i,s_j)]-GEQ);
                                
                             }
                             rhoS = LatticeBoltzmann::rho_s(ix,iy,iz,s_j,false);
                             Vmed0 = LatticeBoltzmann::V_s_med(ix,iy,iz,s_j,rhoS,false);
                             FEQS = LatticeBoltzmann::feq(rhoS,Vmed0,p,i,s_j);
                             FEQ0S = LatticeBoltzmann::feq0(rhoS, Vmed0,s_j);
-                            Fs = LatticeBoltzmann::F_s(ix,iy,iz,s_j,false);
+                            //Fs = LatticeBoltzmann::F_s(ix,iy,iz,s_j,false);
                             f_0_new[nf0(ix,iy,iz,s_j)] = f_0[nf0(ix,iy,iz,s_j)] - (1/taus)*(f_0[nf0(ix,iy,iz,s_j)] - FEQ0S);
-                            f_new[nf(ix,iy,iz,p,i,s_j)] = f[nf(ix,iy,iz,p,i,s_j)] + ((2*taus-1)/(20*taus))*v[p][i]*Fs  - (1/taus)*(f[nf(ix,iy,iz,p,i,s_j)]-FEQS);
+                            f_new[nf(ix,iy,iz,p,i,s_j)] = f[nf(ix,iy,iz,p,i,s_j)] - (1/taus)*(f[nf(ix,iy,iz,p,i,s_j)]-FEQS); //+ ((2*taus-1)/(10*taus))*v[p][i]*Fs; 
                         }                        
                     }
                 }
@@ -344,45 +344,79 @@ void LatticeBoltzmann::Start(double rho2, vector3D Vmed0)
                 }
         }    
 }
-void LatticeBoltzmann::ImposeFields(vector3D Ufan)
+void LatticeBoltzmann::ImposeFields(void)
 {
-    int ix, iy, i;
-    int ixc=Lx/8, iyc=Ly/2, R=Ly/5;
-    double rho0, R2=R*R;
-    vector3D vel_null;
-    vel_null.load(0,0,0);
-    
-    //Go through all cell, looking if they are fan or obstacle
-    for (ix = 0; ix < Lx; ix++)
-        for(iy = 0; iy < Ly; iy++)
-            for (int iz = 0; iz < Lz; iz++)
-                for (int s = 0; s < 2; s++)
-                {
-                    rho0=rho_s(ix, iy, iz, s, false);
-                    //fan
-                    if (ix==0)
-                        for (int p = 0; p < 3; p++)                       
-                            for ( i = 0; i < 6; i++)
-                            {
-                                f_new[nf(ix,iy,iz,p,i,s)]=feq(rho0,Ufan, p, i, s);
-                            }
-                    //Obstacle
-                    else if ((ix-ixc)*(ix-ixc)+(iy-iyc)*(iy-iyc)<=R2)
-                        for (int p = 0; p < 3; p++)                       
-                            for ( i = 0; i < 6; i++)
-                            {
-                                f_new[nf(ix,iy,iz,p,i,s)]=feq(rho0,vel_null, p, i, s);
-                            }
-                    //An extra point at one side to break the isotropy
-                    else if (ix==ixc && iy==iyc+R+1)
-                        for (int p = 0; p < 3; p++)                       
-                            for ( i = 0; i < 6; i++)
-                            {
-                                f_new[nf(ix,iy,iz,p,i,s)]=feq(rho0,vel_null, p, i, s);
-                            }          
-                    
+    int ix,iy,iz,p,i,s;
+    vector3D V0; V0.load(0,0,0);
+    /*iy=0; 
+    for(ix=0;ix<Lx;ix++){
+        for(iz=0;iz<Lz;iz++){
+            for(p=0;p<3;p++){
+                for(i=0;i<6;i++){
+                    for(s=0;s<2;s++){
+                        double rho0=rho_s(ix,iy,iz,s,false);                        
+                        f_0_new[nf0(ix,iy,iz,s)] = feq0(rho0,V0,s);
+                        f_new[nf(ix,iy,iz,p,i,s)]=feq(rho0,V0,p,i,s);
+                    }
                 }
-    
+            }
+        }
+    }
+  
+    iy=Ly-1; 
+      for(ix=0;ix<Lx;ix++){
+        for(iz=0;iz<Lz;iz++){
+            for(p=0;p<3;p++){
+                for(i=0;i<6;i++){
+                    for(s=0;s<2;s++){
+                        double rho0=rho_s(ix,iy,iz,s,false);                        
+                        f_0_new[nf0(ix,iy,iz,s)] = feq0(rho0,V0,s);
+                        f_new[nf(ix,iy,iz,p,i,s)]=feq(rho0,V0,p,i,s);
+                    }
+                }
+            }
+        }
+      }*/
+     vector3D ufan; ufan.load(0.001,0,0);
+    int ixc = Lx/8, iyc = Ly/2, R = Ly/5; double R2 = R*R;
+    for(ix=0;ix<Lx;ix++){
+        for(iy=0;iy<Ly;iy++){
+            //fan
+            double rho0=rho_s(ix,iy,0,s,false); 
+            if (ix==0){
+                for(p=0;p<3;p++){
+                    for(i=0;i<6;i++){
+                        for(s=0;s<2;s++){ 
+                            f_0_new[nf0(ix,iy,iz,s)] = feq0(rho0,ufan,s);
+                            f_new[nf(ix,iy,iz,p,i,s)]=feq(rho0,ufan,p,i,s);
+                        }
+                    }
+                }
+            }
+            //obstacle
+            else if((ix-ixc)*(ix-ixc)+(iy-iyc)*(iy-iyc) <= R2){
+                for(p=0;p<3;p++){
+                    for(i=0;i<6;i++){
+                        for(s=0;s<2;s++){ 
+                            f_0_new[nf0(ix,iy,0,s)] = feq0(rho0,V0,s);
+                            f_new[nf(ix,iy,0,p,i,s)]=feq(rho0,V0,p,i,s);
+                        }
+                    }
+                }
+            }
+            //point at one side to break isotrpoy
+            else if(ix == ixc && iy == iyc + R +1 ){
+                for(p=0;p<3;p++){
+                    for(i=0;i<6;i++){
+                        for(s=0;s<2;s++){ 
+                            f_0_new[nf0(ix,iy,0,s)] = feq0(rho0,V0,s);
+                            f_new[nf(ix,iy,0,p,i,s)]=feq(rho0,V0,p,i,s);
+                        }
+                    }
+                }
+            }   
+        }       
+    }
 }
 
 void LatticeBoltzmann::Print(const char * NameFile)
@@ -410,10 +444,10 @@ void LatticeBoltzmann::Print(const char * NameFile)
         for (iy = 0; iy < Ly; iy++){
 
         for (iz=0;iz<Lz;iz++){
-            rho0 = rho_s(ix, iy, iz, 1, false);
-            velocity = V_s_med(ix, iy, iz, 1, rho0, false);
-            velocity.show();
-            std::cout<<rho0<<std::endl;
+            rho0 = rho_s(ix, iy, iz, 0, true);
+            velocity = V_s_med(ix, iy, iz, 0, rho0, true);
+            
+            std::cout<<ix<<" "<<iy<<" "<<velocity.x()/velocity.norm()<<" "<<velocity.y()/velocity.norm()<<std::endl;
         }}
         std::cout<<std::endl;
     }
@@ -461,13 +495,13 @@ int main(void){
 
     double rho0=1.0;
     vector3D velocity0;
-    velocity0.load(0,0,0);
-    int t, taux=0, tmax=200;
+    velocity0.load(0.001,0,0);
+    int t, taux=0, tmax=1000;
 
 
     //air.test();
 
-    Animation();
+    //Animation();
 
     air.Start(rho0, velocity0); 
     
@@ -475,7 +509,7 @@ int main(void){
     for ( t = 0; t < tmax; t++)
     {
         air.Collision();
-        //air.ImposeFields(velocity0);
+        air.ImposeFields();
         air.Advection();
         //air.Print("null.dat");
     }
