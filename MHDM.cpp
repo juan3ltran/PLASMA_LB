@@ -299,7 +299,7 @@ void LatticeBoltzmann::Collision(void){
                             if (i<4){
                                //Jmed0 = LatticeBoltzmann::J_med(ix,iy,iz,false);
                                //GEQ = LatticeBoltzmann::Geq(E0,B0,p,i,s_j);
-                               //G_new[nG(ix,iy,iz,p,i,s_j)] = G[nG(ix,iy,iz,p,i,s_j)] + ((2*tau2-1)/(16*tau2))*mu0*e[p][i][s_j]*Jmed0 - (1/tau2)*(G[nG(ix,iy,iz,p,i,s_j)]-GEQ);
+                               //G_new[nG(ix,iy,iz,p,i,s_j)] = G[nG(ix,iy,iz,p,i,s_j)] - ((2*tau2-1)/(16*tau2))*mu0*e[p][i][s_j]*Jmed0 - (1/tau2)*(G[nG(ix,iy,iz,p,i,s_j)]-GEQ);
                                
                             }
                             rhoS = LatticeBoltzmann::rho_s(ix,iy,iz,s_j,false);
