@@ -3,15 +3,15 @@
 #include "vector.hpp"
 
 
-const int Lx = 128;   // XXXXXXXXXXXXXXXXXXXX
-const int Ly = 32;   //Para valores grandes de esto la simulacion usa mucha memoria
+const int Lx = 1;   // XXXXXXXXXXXXXXXXXXXX
+const int Ly = 45;   //Para valores grandes de esto la simulacion usa mucha memoria
 const int Lz = 1; //
 const double m0=1.0,m1=1820,q0=-1.0,q1=1.0;
 const double nu=100;  
-const double g=0.25;
+const double g=0.00001;
 const double mu0=1.0;
 const double Gamma=1.0;
-const double xi = 0.5;
+const double xi = 0.0;
 const double taus = 0.55;
 const double tau2 = 0.5;
 
@@ -32,12 +32,12 @@ class LatticeBoltzmann{
         
     public:
         LatticeBoltzmann(void);
-        int nf(int x, int y, int z, int p, int i, int s)
-        {return x + Lx*y + Lx*Ly*z + Lx*Ly*Lz*p + Lx*Ly*Lz*3*i + Lx*Ly*Lz*3*6*s;};
+        int nf(int ix, int iy, int iz, int p, int i, int s) {
+        return s + 2 * i + 2 * 6 * p + 2 * 6 * 3 * iz + 2 * 6 * 3 * Lz * iy + 2 * 6 * 3 * Lz * Ly * ix;}
         int nG(int x, int y, int z, int p, int i, int j)
         {return x + Lx*y + Lx*Ly*z + Lx*Ly*Lz*p + Lx*Ly*Lz*3*i + Lx*Ly*Lz*3*4*j;};
-        int nf0(int x, int y, int z,int s)
-        {return x + Lx*y + Lx*Ly*z + Lx*Ly*Lz*s;};
+        int nf0(int ix, int iy, int iz,int s)
+        {return s + 2* iz + 2*Lz * iy + 2*Lz * Ly *  ix;};
         int ng0(int x, int y, int z)
         {return x + Lx*y + Lx*Ly*z;};
         double rho_s(int ix, int iy, int iz, int s, bool use_new);
@@ -160,7 +160,7 @@ vector3D LatticeBoltzmann::V_s(int ix, int iy, int iz, int s, double& rho_s, boo
             }
         } 
     }
-    return sum/rho_s;
+    return sum /rho_s;
 }
 
 vector3D LatticeBoltzmann::E(int ix, int iy, int iz, bool Usenew){
@@ -224,17 +224,18 @@ vector3D LatticeBoltzmann::J_med(int ix, int iy, int iz, bool use_new){
 vector3D LatticeBoltzmann::F_s(int ix, int iy, int iz, int s, bool use_new){
     vector3D E0, B0, VS, VSm1, F0;
     E0 = LatticeBoltzmann::E(ix,iy,iz,use_new); B0 = LatticeBoltzmann::B(ix,iy,iz,use_new);
-    double rhoS = LatticeBoltzmann::rho_s(ix,iy,iz,s,use_new); double rhoSm1 = LatticeBoltzmann::rho_s(ix,iy,iz,(s+1)%2,use_new);
-    VS = LatticeBoltzmann::V_s(ix,iy,iz,s,rhoS,use_new); VSm1 = LatticeBoltzmann::V_s(ix,iy,iz,(s+1)%2,rhoSm1,use_new);
-    F0.load(0,0,0);//F0.load(rhoS*g,0,0);
-    return (q[s]/m[s])*rhoS*(E0+(VS^B0)) - nu*rhoS*(VS-VSm1) + F0;
+    double rhoS = LatticeBoltzmann::rho_s(ix,iy,iz,s,false); double rhoSm1 = LatticeBoltzmann::rho_s(ix,iy,iz,(s+1)%2,false);
+    VS = LatticeBoltzmann::V_s(ix,iy,iz,s,rhoS,false); VSm1 = LatticeBoltzmann::V_s(ix,iy,iz,(s+1)%2,rhoSm1,false);
+    //F0.load(0,0,0);
+    F0.load(rhoS*g,0,0);
+    return F0;// (q[s]/m[s])*rhoS*(E0+(VS^B0)) - nu*rhoS*(VS-VSm1) + F0;
 }
 
 vector3D LatticeBoltzmann::V_s_med(int ix, int iy, int iz, int s, double& rho_s, bool use_new){
     vector3D VS, FS;
     VS = LatticeBoltzmann::V_s(ix,iy,iz,s,rho_s,use_new);
     FS = LatticeBoltzmann::F_s(ix,iy,iz,s,use_new);
-    return VS;// + 0.5*FS/rho_s;
+    return VS + 0.5*FS/rho_s;
 }
 
 vector3D LatticeBoltzmann::E_med(int ix, int iy, int iz, bool use_new){
@@ -246,10 +247,12 @@ vector3D LatticeBoltzmann::E_med(int ix, int iy, int iz, bool use_new){
 
 double LatticeBoltzmann::feq(double rhoS, vector3D& Vmeds, int p, int i, int s){
     return w[i]*rhoS*(3*xi*pow(rhoS,Gamma-1) + 3*v[p][i]*Vmeds + 4.5*pow(v[p][i]*Vmeds,2) - 1.5*Vmeds.norm2());
+    //return w[i]*rhoS*(1 + 3*v[p][i]*Vmeds + 4.5*pow(v[p][i]*Vmeds,2) - 1.5*Vmeds.norm2());
 }
 
 double LatticeBoltzmann::feq0(double rhoS, vector3D &Vmeds, int s){
     return 3*rhoS*(1-0.5*(4*xi*pow(rhoS,Gamma-1) + Vmeds.norm2()));
+    //return w0*rhoS*(1 - 1.5*Vmeds.norm2());
 }
 
 double LatticeBoltzmann::Geq(vector3D &E_med, vector3D &B, int p, int i, int j){
@@ -275,6 +278,7 @@ void LatticeBoltzmann::Advection(void){
                             //}
                             f[nf(ixnew,iynew,iznew,p,i,s_j)] = f_new[nf(ix,iy,iz,p,i,s_j)];
                             f_0[nf0(ix,iy,iz,s_j)] = f_0_new[nf0(ix,iy,iz,s_j)];
+                            
                         }                        
                     }
                 }
@@ -304,14 +308,17 @@ void LatticeBoltzmann::Collision(void){
                             }
                             rhoS = LatticeBoltzmann::rho_s(ix,iy,iz,s_j,false);
                             Vmed0 = LatticeBoltzmann::V_s_med(ix,iy,iz,s_j,rhoS,false);
-                            FEQS = LatticeBoltzmann::feq(rhoS,Vmed0,p,i,s_j);
+                            FEQS =  LatticeBoltzmann::feq(rhoS,Vmed0,p,i,s_j);
                             FEQ0S = LatticeBoltzmann::feq0(rhoS, Vmed0,s_j);
-                            //Fs = LatticeBoltzmann::F_s(ix,iy,iz,s_j,false);
-                            f_0_new[nf0(ix,iy,iz,s_j)] = f_0[nf0(ix,iy,iz,s_j)] - (1/taus)*(f_0[nf0(ix,iy,iz,s_j)] - FEQ0S);
-                            f_new[nf(ix,iy,iz,p,i,s_j)] = f[nf(ix,iy,iz,p,i,s_j)] - (1/taus)*(f[nf(ix,iy,iz,p,i,s_j)]-FEQS); //+ ((2*taus-1)/(10*taus))*v[p][i]*Fs; 
+                            Fs = LatticeBoltzmann::F_s(ix,iy,iz,s_j,false);
+                            f_0_new[nf0(ix,iy,iz,s_j)] = f_0[nf0(ix,iy,iz,s_j)] - (1.0/taus)*(f_0[nf0(ix,iy,iz,s_j)] - FEQ0S);
+                            f_new[nf(ix,iy,iz,p,i,s_j)] = f[nf(ix,iy,iz,p,i,s_j)]  - (1.0/taus)*(f[nf(ix,iy,iz,p,i,s_j)]-FEQS); //((2*taus-1)/(10*taus))*v[p][i]*Fs; 
+                           // if(p==0&&i==0&&s_j==0){std::cout<<FEQ0S/*f_0_new[nf(ix,iy,iz,p,i,s_j)]*/<<std::endl;}
+                            //if(s_j==0){std::cout<<FEQS/*f_new[nf(ix,iy,iz,p,i,s_j)]*/<<std::endl;}
                         }                        
                     }
                 }
+                            
             }
         }
     }        
@@ -340,15 +347,17 @@ void LatticeBoltzmann::Start(double rho2, vector3D Vmed0)
                             G[nG(ix,iy,iz,p,i,1)] = Geq(E0,B0,p,i,1);
                             G_0[ng0(ix,iy,iz)] = Geq0();                            
                         }
+                        
                     }
                 }
+                
         }    
 }
 void LatticeBoltzmann::ImposeFields(void)
 {
     int ix,iy,iz,p,i,s;
     vector3D V0; V0.load(0,0,0);
-    /*iy=0; 
+    iy=0; 
     for(ix=0;ix<Lx;ix++){
         for(iz=0;iz<Lz;iz++){
             for(p=0;p<3;p++){
@@ -375,8 +384,10 @@ void LatticeBoltzmann::ImposeFields(void)
                     }
                 }
             }
+          
         }
-      }*/
+      }
+     /*
      vector3D ufan; ufan.load(0.001,0,0);
     int ixc = Lx/8, iyc = Ly/2, R = Ly/5; double R2 = R*R;
     for(ix=0;ix<Lx;ix++){
@@ -416,7 +427,7 @@ void LatticeBoltzmann::ImposeFields(void)
                 }
             }   
         }       
-    }
+    }*/
 }
 
 void LatticeBoltzmann::Print(const char * NameFile)
@@ -444,10 +455,11 @@ void LatticeBoltzmann::Print(const char * NameFile)
         for (iy = 0; iy < Ly; iy++){
 
         for (iz=0;iz<Lz;iz++){
-            rho0 = rho_s(ix, iy, iz, 0, true);
-            velocity = V_s_med(ix, iy, iz, 0, rho0, true);
+            rho0 = rho_s(ix, iy, iz, 1, true);
+            velocity = V_s_med(ix, iy, iz, 1, rho0, true);
             
-            std::cout<<ix<<" "<<iy<<" "<<velocity.x()/velocity.norm()<<" "<<velocity.y()/velocity.norm()<<std::endl;
+            //std::cout<<ix<<" "<<iy<<" "<<velocity.x()<<" "<<velocity.y()<<std::endl;
+            std::cout<<iy<<" "<<velocity.x()<<std::endl;;
         }}
         std::cout<<std::endl;
     }
@@ -495,8 +507,8 @@ int main(void){
 
     double rho0=1.0;
     vector3D velocity0;
-    velocity0.load(0.001,0,0);
-    int t, taux=0, tmax=1000;
+    velocity0.load(0,0,0);
+    int t, taux=0, tmax=2250;
 
 
     //air.test();
@@ -507,15 +519,21 @@ int main(void){
     
    
     for ( t = 0; t < tmax; t++)
-    {
+    {   
         air.Collision();
+        
+        
         air.ImposeFields();
+        
+        
         air.Advection();
+        
+
         //air.Print("null.dat");
     }
     
     
 
-    air.Print("null.dat");
+  air.Print("null.dat");
     return 0;
 }
