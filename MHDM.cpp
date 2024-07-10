@@ -11,7 +11,7 @@ const double nu=100;
 const double g=0.00001;
 const double mu0=1.0;
 const double Gamma=1.0;
-const double xi = 0.0;
+const double xi = 0.5;
 const double taus = 0.55;
 const double tau2 = 0.5;
 
@@ -246,8 +246,8 @@ vector3D LatticeBoltzmann::E_med(int ix, int iy, int iz, bool use_new){
 }
 
 double LatticeBoltzmann::feq(double rhoS, vector3D& Vmeds, int p, int i, int s){
-    return w[i]*rhoS*(3*xi*pow(rhoS,Gamma-1) + 3*v[p][i]*Vmeds + 4.5*pow(v[p][i]*Vmeds,2) - 1.5*Vmeds.norm2());
-    //return w[i]*rhoS*(1 + 3*v[p][i]*Vmeds + 4.5*pow(v[p][i]*Vmeds,2) - 1.5*Vmeds.norm2());
+ return w[i]*rhoS*(3*xi*pow(rhoS,Gamma-1) + 3*v[p][i]*Vmeds + 4.5*pow(v[p][i]*Vmeds,2) - 1.5*Vmeds.norm2());
+  // return w[i]*rhoS*(1 + 3*v[p][i]*Vmeds + 4.5*pow(v[p][i]*Vmeds,2) - 1.5*Vmeds.norm2());
 }
 
 double LatticeBoltzmann::feq0(double rhoS, vector3D &Vmeds, int s){
@@ -312,7 +312,7 @@ void LatticeBoltzmann::Collision(void){
                             FEQ0S = LatticeBoltzmann::feq0(rhoS, Vmed0,s_j);
                             Fs = LatticeBoltzmann::F_s(ix,iy,iz,s_j,false);
                             f_0_new[nf0(ix,iy,iz,s_j)] = f_0[nf0(ix,iy,iz,s_j)] - (1.0/taus)*(f_0[nf0(ix,iy,iz,s_j)] - FEQ0S);
-                            f_new[nf(ix,iy,iz,p,i,s_j)] = f[nf(ix,iy,iz,p,i,s_j)]  - (1.0/taus)*(f[nf(ix,iy,iz,p,i,s_j)]-FEQS); //((2*taus-1)/(10*taus))*v[p][i]*Fs; 
+                            f_new[nf(ix,iy,iz,p,i,s_j)] = f[nf(ix,iy,iz,p,i,s_j)]  - (1.0/taus)*(f[nf(ix,iy,iz,p,i,s_j)]-FEQS)+((2*taus-1)/(10*taus))*v[p][i]*Fs; 
                            // if(p==0&&i==0&&s_j==0){std::cout<<FEQ0S/*f_0_new[nf(ix,iy,iz,p,i,s_j)]*/<<std::endl;}
                             //if(s_j==0){std::cout<<FEQS/*f_new[nf(ix,iy,iz,p,i,s_j)]*/<<std::endl;}
                         }                        
@@ -508,7 +508,7 @@ int main(void){
     double rho0=1.0;
     vector3D velocity0;
     velocity0.load(0,0,0);
-    int t, taux=0, tmax=2250;
+    int t, taux=0, tmax=2000;
 
 
     //air.test();
