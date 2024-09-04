@@ -12,7 +12,7 @@ const double g=0.00001;
 const double mu0=1.0;
 const double Gamma=1.0;
 const double xi = 0.5;
-const double taus = 0.55;
+const double taus = 1.0;
 const double tau2 = 0.5;
 
 class LatticeBoltzmann{
@@ -223,12 +223,12 @@ vector3D LatticeBoltzmann::J_med(int ix, int iy, int iz, bool use_new){
 
 vector3D LatticeBoltzmann::F_s(int ix, int iy, int iz, int s, bool use_new){
     vector3D E0, B0, VS, VSm1, F0;
-    E0 = LatticeBoltzmann::E(ix,iy,iz,use_new); B0 = LatticeBoltzmann::B(ix,iy,iz,use_new);
+    E0 = LatticeBoltzmann::E(ix,iy,iz,false); B0 = LatticeBoltzmann::B(ix,iy,iz,false);
     double rhoS = LatticeBoltzmann::rho_s(ix,iy,iz,s,false); double rhoSm1 = LatticeBoltzmann::rho_s(ix,iy,iz,(s+1)%2,false);
     VS = LatticeBoltzmann::V_s(ix,iy,iz,s,rhoS,false); VSm1 = LatticeBoltzmann::V_s(ix,iy,iz,(s+1)%2,rhoSm1,false);
     //F0.load(0,0,0);
     F0.load(rhoS*g,0,0);
-    return F0;// (q[s]/m[s])*rhoS*(E0+(VS^B0)) - nu*rhoS*(VS-VSm1) + F0;
+    return F0 + ((VS^B0)); //F0 +(q[s]/m[s])*rhoS*(E0+(VS^B0));// - nu*rhoS*(VS-VSm1) + F0;
 }
 
 vector3D LatticeBoltzmann::V_s_med(int ix, int iy, int iz, int s, double& rho_s, bool use_new){
@@ -246,8 +246,8 @@ vector3D LatticeBoltzmann::E_med(int ix, int iy, int iz, bool use_new){
 }
 
 double LatticeBoltzmann::feq(double rhoS, vector3D& Vmeds, int p, int i, int s){
- return w[i]*rhoS*(3*xi*pow(rhoS,Gamma-1) + 3*v[p][i]*Vmeds + 4.5*pow(v[p][i]*Vmeds,2) - 1.5*Vmeds.norm2());
-  // return w[i]*rhoS*(1 + 3*v[p][i]*Vmeds + 4.5*pow(v[p][i]*Vmeds,2) - 1.5*Vmeds.norm2());
+    return w[i]*rhoS*(3*xi*pow(rhoS,Gamma-1) + 3*v[p][i]*Vmeds + 9*pow(v[p][i]*Vmeds,2) - 1.5*Vmeds.norm2());
+  //return w[i]*rhoS*(1 + 3*v[p][i]*Vmeds + 4.5*pow(v[p][i]*Vmeds,2) - 1.5*Vmeds.norm2());
 }
 
 double LatticeBoltzmann::feq0(double rhoS, vector3D &Vmeds, int s){
@@ -272,10 +272,10 @@ void LatticeBoltzmann::Advection(void){
                     for(int i=0; i<6;i++){
                         ixnew=(ix+V[0][p][i]+Lx)%Lx; iynew=(iy+V[1][p][i]+Ly)%Ly; iznew=(iz+V[2][p][i]+Lz)%Lz;
                         for(int s_j=0;s_j<2;s_j++){
-                           // if (i<4){
-                                //G[nG(ixnew,iynew,iznew,p,i,s_j)] = G_new[nG(ix,iy,iz,p,i,s_j)];
-                                //G_0[ng0(ix,iy,iz)] = G_0_new[ng0(ix,iy,iz)];
-                            //}
+                           if (i<4){
+                                G[nG(ixnew,iynew,iznew,p,i,s_j)] = G_new[nG(ix,iy,iz,p,i,s_j)];
+                                G_0[ng0(ix,iy,iz)] = G_0_new[ng0(ix,iy,iz)];
+                            }
                             f[nf(ixnew,iynew,iznew,p,i,s_j)] = f_new[nf(ix,iy,iz,p,i,s_j)];
                             f_0[nf0(ix,iy,iz,s_j)] = f_0_new[nf0(ix,iy,iz,s_j)];
                             
@@ -293,17 +293,18 @@ void LatticeBoltzmann::Collision(void){
     for(int ix=0; ix<Lx ; ix++){
         for(int iy=0; iy<Ly ; iy++){
             for(int iz=0; iz<Lz ; iz++){
-                //E0 = LatticeBoltzmann::E_med(ix,iy,iz,false); 
-                //B0 = LatticeBoltzmann::B(ix,iy,iz,false);  
-                //GEQ0 = LatticeBoltzmann::Geq0();
-                //G_0_new[ng0(ix,iy,iz)] = G_0[ng0(ix,iy,iz)] - (1/tau2)*(G_0[ng0(ix,iy,iz)]-GEQ0);              
+                E0 = LatticeBoltzmann::E_med(ix,iy,iz,false); 
+                B0 = LatticeBoltzmann::B(ix,iy,iz,false);  
+                //E0.show();
+                GEQ0 = LatticeBoltzmann::Geq0();
+                G_0_new[ng0(ix,iy,iz)] = G_0[ng0(ix,iy,iz)] - (1/tau2)*(G_0[ng0(ix,iy,iz)]-GEQ0);              
                  for(int p=0;p<3;p++){
                     for(int i=0; i<6;i++){
                         for(int s_j=0;s_j<2;s_j++){
                             if (i<4){
-                               //Jmed0 = LatticeBoltzmann::J_med(ix,iy,iz,false);
-                               //GEQ = LatticeBoltzmann::Geq(E0,B0,p,i,s_j);
-                               //G_new[nG(ix,iy,iz,p,i,s_j)] = G[nG(ix,iy,iz,p,i,s_j)] - ((2*tau2-1)/(16*tau2))*mu0*e[p][i][s_j]*Jmed0 - (1/tau2)*(G[nG(ix,iy,iz,p,i,s_j)]-GEQ);
+                               Jmed0 = LatticeBoltzmann::J_med(ix,iy,iz,false);
+                               GEQ = LatticeBoltzmann::Geq(E0,B0,p,i,s_j);
+                               G_new[nG(ix,iy,iz,p,i,s_j)] = G[nG(ix,iy,iz,p,i,s_j)]  - (1/tau2)*(G[nG(ix,iy,iz,p,i,s_j)]-GEQ) - ((2*tau2-1)/(16*tau2))*mu0*e[p][i][s_j]*Jmed0;
                                
                             }
                             rhoS = LatticeBoltzmann::rho_s(ix,iy,iz,s_j,false);
@@ -331,7 +332,7 @@ void LatticeBoltzmann::Start(double rho2, vector3D Vmed0)
     double rho1 = 1820;
     double B0norm = 0.0;
     vector3D E0, B0;
-    E0.load(0,0,0); B0.load(0,0,B0norm);
+    E0.load(0,0,0); B0.load(0,B0norm,0);
     for (int ix = 0; ix < Lx; ix++) //for each cell
         for (int iy = 0; iy < Ly; iy++)
             for (int iz = 0; iz < Lz; iz++){
@@ -350,7 +351,6 @@ void LatticeBoltzmann::Start(double rho2, vector3D Vmed0)
                         
                     }
                 }
-                
         }    
 }
 void LatticeBoltzmann::ImposeFields(void)
@@ -457,10 +457,13 @@ void LatticeBoltzmann::Print(const char * NameFile)
         for (iz=0;iz<Lz;iz++){
             rho0 = rho_s(ix, iy, iz, 1, true);
             velocity = V_s_med(ix, iy, iz, 1, rho0, true);
-            
+            vector3D E0=E_med(ix,iy,iz,true);
+            vector3D B0 = B(ix,iy,iz,true);
             //std::cout<<ix<<" "<<iy<<" "<<velocity.x()<<" "<<velocity.y()<<std::endl;
-            std::cout<<iy<<" "<<velocity.x()<<std::endl;;
-        }}
+            std::cout<<iy<<" "<<velocity.x()<<std::endl;
+            E0.show();
+            B0.show();
+            }}
         std::cout<<std::endl;
     }
     std::cout << "e" << std::endl; // Indica a Gnuplot que ha terminado de recibir datos para este frame
