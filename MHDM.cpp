@@ -6,10 +6,10 @@
 const int Lx = 1;   // XXXXXXXXXXXXXXXXXXXX
 const int Ly = 45;   //Para valores grandes de esto la simulacion usa mucha memoria
 const int Lz = 1; //
-const double m0=1.0,m1=1820,q0=-1.0,q1=1.0;
-const double nu=100;  
+const double m0=0.0001,m1=0.1820,q0=-0.0001,q1=0.0001;
+const double nu=0.0100;  
 const double g=0.00001;
-const double mu0=1.0;
+const double mu0=0.0001;
 const double Gamma=1.0;
 const double xi = 0.5;
 const double taus = 1.0;
@@ -228,7 +228,7 @@ vector3D LatticeBoltzmann::F_s(int ix, int iy, int iz, int s, bool use_new){
     VS = LatticeBoltzmann::V_s(ix,iy,iz,s,rhoS,false); VSm1 = LatticeBoltzmann::V_s(ix,iy,iz,(s+1)%2,rhoSm1,false);
     //F0.load(0,0,0);
     F0.load(rhoS*g,0,0);
-    return F0 + ((VS^B0)); //F0 +(q[s]/m[s])*rhoS*(E0+(VS^B0));// - nu*rhoS*(VS-VSm1) + F0;
+    return  F0 + (q[s]/m[s])*rhoS*(E0+(VS^B0))- nu*rhoS*(VS-VSm1); 
 }
 
 vector3D LatticeBoltzmann::V_s_med(int ix, int iy, int iz, int s, double& rho_s, bool use_new){
@@ -246,7 +246,7 @@ vector3D LatticeBoltzmann::E_med(int ix, int iy, int iz, bool use_new){
 }
 
 double LatticeBoltzmann::feq(double rhoS, vector3D& Vmeds, int p, int i, int s){
-    return w[i]*rhoS*(3*xi*pow(rhoS,Gamma-1) + 3*v[p][i]*Vmeds + 9*pow(v[p][i]*Vmeds,2) - 1.5*Vmeds.norm2());
+   return w[i]*rhoS*(3*xi*pow(rhoS,Gamma-1) + 3*v[p][i]*Vmeds + 9*pow(v[p][i]*Vmeds,2) - 1.5*Vmeds.norm2());
   //return w[i]*rhoS*(1 + 3*v[p][i]*Vmeds + 4.5*pow(v[p][i]*Vmeds,2) - 1.5*Vmeds.norm2());
 }
 
@@ -313,9 +313,7 @@ void LatticeBoltzmann::Collision(void){
                             FEQ0S = LatticeBoltzmann::feq0(rhoS, Vmed0,s_j);
                             Fs = LatticeBoltzmann::F_s(ix,iy,iz,s_j,false);
                             f_0_new[nf0(ix,iy,iz,s_j)] = f_0[nf0(ix,iy,iz,s_j)] - (1.0/taus)*(f_0[nf0(ix,iy,iz,s_j)] - FEQ0S);
-                            f_new[nf(ix,iy,iz,p,i,s_j)] = f[nf(ix,iy,iz,p,i,s_j)]  - (1.0/taus)*(f[nf(ix,iy,iz,p,i,s_j)]-FEQS)+((2*taus-1)/(10*taus))*v[p][i]*Fs; 
-                           // if(p==0&&i==0&&s_j==0){std::cout<<FEQ0S/*f_0_new[nf(ix,iy,iz,p,i,s_j)]*/<<std::endl;}
-                            //if(s_j==0){std::cout<<FEQS/*f_new[nf(ix,iy,iz,p,i,s_j)]*/<<std::endl;}
+                            f_new[nf(ix,iy,iz,p,i,s_j)] = f[nf(ix,iy,iz,p,i,s_j)]  - (1.0/taus)*(f[nf(ix,iy,iz,p,i,s_j)]-FEQS)+((2*taus-1)/(20*taus))*v[p][i]*Fs; 
                         }                        
                     }
                 }
@@ -330,7 +328,7 @@ void LatticeBoltzmann::Start(double rho2, vector3D Vmed0)
 
     double rho0 = 1.0;
     double rho1 = 1820;
-    double B0norm = 0.0;
+    double B0norm = 0.008;
     vector3D E0, B0;
     E0.load(0,0,0); B0.load(0,B0norm,0);
     for (int ix = 0; ix < Lx; ix++) //for each cell
@@ -386,6 +384,7 @@ void LatticeBoltzmann::ImposeFields(void)
             }
           
         }
+      
       }
      /*
      vector3D ufan; ufan.load(0.001,0,0);
@@ -455,14 +454,14 @@ void LatticeBoltzmann::Print(const char * NameFile)
         for (iy = 0; iy < Ly; iy++){
 
         for (iz=0;iz<Lz;iz++){
-            rho0 = rho_s(ix, iy, iz, 1, true);
-            velocity = V_s_med(ix, iy, iz, 1, rho0, true);
+            rho0 = rho_s(ix, iy, iz, 0, true);
+            velocity = V_s_med(ix, iy, iz, 0, rho0, true);
             vector3D E0=E_med(ix,iy,iz,true);
             vector3D B0 = B(ix,iy,iz,true);
             //std::cout<<ix<<" "<<iy<<" "<<velocity.x()<<" "<<velocity.y()<<std::endl;
-            std::cout<<iy<<" "<<velocity.x()<<std::endl;
-            E0.show();
-            B0.show();
+            std::cout<<iy<<" "<<velocity.x()<<" "<<B0.x()<<" "<<B0.y()<<std::endl;
+            //E0.show();
+            //B0.show();
             }}
         std::cout<<std::endl;
     }
@@ -511,7 +510,7 @@ int main(void){
     double rho0=1.0;
     vector3D velocity0;
     velocity0.load(0,0,0);
-    int t, taux=0, tmax=2000;
+    int t, taux=0, tmax=16000;
 
 
     //air.test();
@@ -523,6 +522,7 @@ int main(void){
    
     for ( t = 0; t < tmax; t++)
     {   
+        
         air.Collision();
         
         
