@@ -328,7 +328,7 @@ void LatticeBoltzmann::Start(double rho2, vector3D Vmed0)
 
     double rho0 = 1.0;
     double rho1 = 1820;
-    double B0norm = 0.008;
+    double B0norm = 0.0095;
     vector3D E0, B0;
     E0.load(0,0,0); B0.load(0,B0norm,0);
     for (int ix = 0; ix < Lx; ix++) //for each cell
