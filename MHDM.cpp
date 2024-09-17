@@ -4,12 +4,12 @@
 
 
 const int Lx = 1;   // XXXXXXXXXXXXXXXXXXXX
-const int Ly = 90;   //Para valores grandes de esto la simulacion usa mucha memoria
+const int Ly = 45;   //Para valores grandes de esto la simulacion usa mucha memoria
 const int Lz = 1; //
-const double m0=1,m1=1820,q0=-1,q1=1;
-const double nu=0.00010;  
-const double g=0.0001;
-const double mu0=0.00001;
+const double m0=0.01,m1=18.20,q0=-0.001,q1=0.001;
+const double nu=1;  
+const double g=0.00005;
+const double mu0=0.01;
 const double Gamma=1.0;
 const double xi = 0.5;
 const double taus = 1.0;
@@ -54,7 +54,7 @@ class LatticeBoltzmann{
         vector3D J_med(int ix, int iy, int iz, bool use_new);
         vector3D F_s(int ix, int iy, int iz, int s, bool use_new);
         //Evolution dynamics
-        void Start(double rho0, vector3D Vmed0);
+        void Start(vector3D Vmed0);
         void Advection(void);
         void Collision(void);
         void ImposeFields(void);
@@ -323,12 +323,12 @@ void LatticeBoltzmann::Collision(void){
     }        
 }
 
-void LatticeBoltzmann::Start(double rho2, vector3D Vmed0)
+void LatticeBoltzmann::Start( vector3D Vmed0)
 {
 
     double rho0 = 1.0;
     double rho1 = 1820;
-    double B0norm = 0.0035;
+    double B0norm = 0.04;//0.0-0.5
     vector3D E0, B0;
     E0.load(0,0,0); B0.load(0,B0norm,0);
     for (int ix = 0; ix < Lx; ix++) //for each cell
@@ -507,7 +507,6 @@ void Animation(void)
 int main(void){
     LatticeBoltzmann air;
 
-    double rho0=1.0;
     vector3D velocity0;
     velocity0.load(0,0,0);
     int t, taux=0, tmax=3000;
@@ -517,7 +516,7 @@ int main(void){
 
     //Animation();
 
-    air.Start(rho0, velocity0); 
+    air.Start(velocity0); 
     
    
     for ( t = 0; t < tmax; t++)
