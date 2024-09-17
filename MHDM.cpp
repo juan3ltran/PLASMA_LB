@@ -4,12 +4,12 @@
 
 
 const int Lx = 1;   // XXXXXXXXXXXXXXXXXXXX
-const int Ly = 45;   //Para valores grandes de esto la simulacion usa mucha memoria
+const int Ly = 90;   //Para valores grandes de esto la simulacion usa mucha memoria
 const int Lz = 1; //
-const double m0=0.0001,m1=0.1820,q0=-0.0001,q1=0.0001;
-const double nu=0.0100;  
-const double g=0.00001;
-const double mu0=0.0001;
+const double m0=1,m1=1820,q0=-1,q1=1;
+const double nu=0.00010;  
+const double g=0.0001;
+const double mu0=0.00001;
 const double Gamma=1.0;
 const double xi = 0.5;
 const double taus = 1.0;
@@ -328,7 +328,7 @@ void LatticeBoltzmann::Start(double rho2, vector3D Vmed0)
 
     double rho0 = 1.0;
     double rho1 = 1820;
-    double B0norm = 0.0095;
+    double B0norm = 0.0035;
     vector3D E0, B0;
     E0.load(0,0,0); B0.load(0,B0norm,0);
     for (int ix = 0; ix < Lx; ix++) //for each cell
@@ -510,7 +510,7 @@ int main(void){
     double rho0=1.0;
     vector3D velocity0;
     velocity0.load(0,0,0);
-    int t, taux=0, tmax=16000;
+    int t, taux=0, tmax=3000;
 
 
     //air.test();
