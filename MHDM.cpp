@@ -3,9 +3,9 @@
 #include "vector.hpp"
 
 
-const int Lx = 1;   // XXXXXXXXXXXXXXXXXXXX
-const int Ly = 45;   //Para valores grandes de esto la simulacion usa mucha memoria
-const int Lz = 1; //
+const int Lx = 1;  
+const int Ly = 45;   
+const int Lz = 1; 
 const double m0=0.01,m1=18.20,q0=-0.001,q1=0.001;
 const double nu=1;  
 const double g=0.00005;
@@ -14,6 +14,7 @@ const double Gamma=1.0;
 const double xi = 0.5;
 const double taus = 1.0;
 const double tau2 = 0.5;
+const double magnetic_field_y = 0.04; //0-0.05
 
 class LatticeBoltzmann{
     private:
@@ -247,12 +248,10 @@ vector3D LatticeBoltzmann::E_med(int ix, int iy, int iz, bool use_new){
 
 double LatticeBoltzmann::feq(double rhoS, vector3D& Vmeds, int p, int i, int s){
    return w[i]*rhoS*(3*xi*pow(rhoS,Gamma-1) + 3*v[p][i]*Vmeds + 9*pow(v[p][i]*Vmeds,2) - 1.5*Vmeds.norm2());
-  //return w[i]*rhoS*(1 + 3*v[p][i]*Vmeds + 4.5*pow(v[p][i]*Vmeds,2) - 1.5*Vmeds.norm2());
 }
 
 double LatticeBoltzmann::feq0(double rhoS, vector3D &Vmeds, int s){
     return 3*rhoS*(1-0.5*(4*xi*pow(rhoS,Gamma-1) + Vmeds.norm2()));
-    //return w0*rhoS*(1 - 1.5*Vmeds.norm2());
 }
 
 double LatticeBoltzmann::Geq(vector3D &E_med, vector3D &B, int p, int i, int j){
@@ -295,7 +294,7 @@ void LatticeBoltzmann::Collision(void){
             for(int iz=0; iz<Lz ; iz++){
                 E0 = LatticeBoltzmann::E_med(ix,iy,iz,false); 
                 B0 = LatticeBoltzmann::B(ix,iy,iz,false);  
-                //E0.show();
+               
                 GEQ0 = LatticeBoltzmann::Geq0();
                 G_0_new[ng0(ix,iy,iz)] = G_0[ng0(ix,iy,iz)] - (1/tau2)*(G_0[ng0(ix,iy,iz)]-GEQ0);              
                  for(int p=0;p<3;p++){
@@ -328,7 +327,7 @@ void LatticeBoltzmann::Start( vector3D Vmed0)
 
     double rho0 = 1.0;
     double rho1 = 1820;
-    double B0norm = 0.04;//0.0-0.5
+    double B0norm = magnetic_field_y;//0.0-0.5
     vector3D E0, B0;
     E0.load(0,0,0); B0.load(0,B0norm,0);
     for (int ix = 0; ix < Lx; ix++) //for each cell
@@ -386,114 +385,39 @@ void LatticeBoltzmann::ImposeFields(void)
         }
       
       }
-     /*
-     vector3D ufan; ufan.load(0.001,0,0);
-    int ixc = Lx/8, iyc = Ly/2, R = Ly/5; double R2 = R*R;
-    for(ix=0;ix<Lx;ix++){
-        for(iy=0;iy<Ly;iy++){
-            //fan
-            double rho0=rho_s(ix,iy,0,s,false); 
-            if (ix==0){
-                for(p=0;p<3;p++){
-                    for(i=0;i<6;i++){
-                        for(s=0;s<2;s++){ 
-                            f_0_new[nf0(ix,iy,iz,s)] = feq0(rho0,ufan,s);
-                            f_new[nf(ix,iy,iz,p,i,s)]=feq(rho0,ufan,p,i,s);
-                        }
-                    }
-                }
-            }
-            //obstacle
-            else if((ix-ixc)*(ix-ixc)+(iy-iyc)*(iy-iyc) <= R2){
-                for(p=0;p<3;p++){
-                    for(i=0;i<6;i++){
-                        for(s=0;s<2;s++){ 
-                            f_0_new[nf0(ix,iy,0,s)] = feq0(rho0,V0,s);
-                            f_new[nf(ix,iy,0,p,i,s)]=feq(rho0,V0,p,i,s);
-                        }
-                    }
-                }
-            }
-            //point at one side to break isotrpoy
-            else if(ix == ixc && iy == iyc + R +1 ){
-                for(p=0;p<3;p++){
-                    for(i=0;i<6;i++){
-                        for(s=0;s<2;s++){ 
-                            f_0_new[nf0(ix,iy,0,s)] = feq0(rho0,V0,s);
-                            f_new[nf(ix,iy,0,p,i,s)]=feq(rho0,V0,p,i,s);
-                        }
-                    }
-                }
-            }   
-        }       
-    }*/
+
 }
 
 void LatticeBoltzmann::Print(const char * NameFile)
 {
-    /*std::ofstream MyFile(NameFile); 
-    double rho0, Ux0, Uy0; int ix,iy;
-    for (ix = 0; ix < Lx; ix+=4)
-    {
-        for (iy = 0; iy < Ly; iy+=4)
-        {
-            rho0=rho(ix, iy, true);
-            Ux0=Jx(ix, iy, true)/rho0;
-            Uy0=Jy(ix, iy, true)/rho0;
-            MyFile<<ix<<" "<<iy<<" "<<Ux0/Ufan*4<<" "<<Uy0/Ufan*4<<std::endl;
-        }
-        MyFile<<std::endl;
-    }
-    MyFile.close();*/
-    //std::cout << "plot '-' using 1:2:3:4 with vectors head filled lt 2 title 'Campo vectorial'" << std::endl;
-    double rho0;
+    double rho0 ,rho1, rho;
     int ix,iy,iz;
-    vector3D velocity;
+    vector3D velocity0, velocity1, velocity;
     for (ix = 0; ix < Lx; ix++)
     {
         for (iy = 0; iy < Ly; iy++){
 
         for (iz=0;iz<Lz;iz++){
             rho0 = rho_s(ix, iy, iz, 0, true);
-            velocity = V_s_med(ix, iy, iz, 0, rho0, true);
+            rho1 = rho_s(ix,iy,iz,1,true);
+            rho = rho0 + rho1;
+
+            velocity0 = V_s_med(ix, iy, iz, 0, rho0, true);
+            velocity1 = V_s_med(ix, iy, iz, 1, rho0, true);
+            velocity = (rho*velocity0 + rho1*velocity1)/rho;
+
             vector3D E0=E_med(ix,iy,iz,true);
             vector3D B0 = B(ix,iy,iz,true);
-            //std::cout<<ix<<" "<<iy<<" "<<velocity.x()<<" "<<velocity.y()<<std::endl;
+            
             std::cout<<iy<<" "<<velocity.x()<<" "<<B0.x()<<" "<<B0.y()<<std::endl;
-            //E0.show();
-            //B0.show();
+            
             }}
         std::cout<<std::endl;
     }
-    std::cout << "e" << std::endl; // Indica a Gnuplot que ha terminado de recibir datos para este frame
+    std::cout << "e" << std::endl; 
 }
 
-void LatticeBoltzmann::test(void)
-{
-    /*double rho0=0.1;
-    vector3D Vmed0;
-    Vmed0.load(0.1,0,0);*/
-    
-    for (int ix = 0; ix < Lx; ix++) //for each cell
-        for (int iy = 0; iy < Ly; iy++)
-            for (int iz = 0; iz < Lz; iz++)
-                for (int p = 0; p < 3; p++) //in each plane
-                    for (int i = 0; i < 6; i++)// at each direcction                                                 
-                        for (int s = 0; s < 2; s++) //of both fluids
-                        {
-                            
-                            if (nf(ix,iy,iz,p,i,s)>=Lx*Ly*Lz*3*6*2)
-                            {
-                                std::cout<<"Te pasaste pa "<<nf(ix,iy,iz,p,i,s)<<std::endl;
-                            }
-
-                            B(ix,iy,iz,false);
-                            B(ix,iy,iz,true);
-
-                            E(ix,iy,iz,false);
-                            E(ix,iy,iz,true);
-                        }
-}       
+     
 
 void Animation(void)
 {
@@ -505,37 +429,34 @@ void Animation(void)
 }
 
 int main(void){
-    LatticeBoltzmann air;
+    LatticeBoltzmann plasma;
 
     vector3D velocity0;
     velocity0.load(0,0,0);
     int t, taux=0, tmax=3000;
 
 
-    //air.test();
 
-    //Animation();
-
-    air.Start(velocity0); 
+    plasma.Start(velocity0); 
     
    
     for ( t = 0; t < tmax; t++)
     {   
         
-        air.Collision();
+        plasma.Collision();
         
         
-        air.ImposeFields();
+        plasma.ImposeFields();
         
         
-        air.Advection();
+        plasma.Advection();
         
 
-        //air.Print("null.dat");
+        
     }
     
     
 
-  air.Print("null.dat");
+  plasma.Print("null.dat");
     return 0;
 }
