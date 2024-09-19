@@ -1,25 +1,20 @@
 # Definición de variables para simplificar cambios futuros
 CXX=g++
 CXXFLAGS=-O3
-dbFLAGS= -g -Wall -fsanitize=address -fsanitize=undefined -fsanitize=leak
-simulation_SOURCE=MHDM.cpp
-simulation_EXECUTABLE=MHDM.x
+SOURCES = main.cpp Lattice_dynamics.cpp Lattice_Init.cpp vector.cpp
+OBJECTS = $(SOURCES:.cpp=.o)
+EXECUTABLE = Hartmann.x
 
-.PHONY: all simulation  clean
+all: $(EXECUTABLE)
 
-# Objetivo por defecto que construye la simulacion
-all: simulation 
 
-# Objetivo para construir y ejecutar la parte de simulation
-simulation: $(simulation_SOURCE)	vector.o
-	$(CXX) $(CXXFLAGS) $(simulation_SOURCE) vector.o -o $(simulation_EXECUTABLE)
+$(EXECUTABLE): $(OBJECTS)
+	$(CXX) $(OBJECTS) $(LDFLAGS) -o $@ 
 
-debug: 
-	$(CXX) $(dbFLAGS) $(simulation_SOURCE) vector.o -o $(simulation_EXECUTABLE)
 
-vector.o: vector.cpp
-	g++ -c vector.cpp -o vector.o
+%.o: %.cpp
+	$(CXX) $(CXXFLAGS) -c $< -o $@
 
-# Objetivo para limpiar los archivos generados
+
 clean:
-	rm -f *.o *.x *.out
+	rm -f $(OBJECTS) $(EXECUTABLE) *.dat 
