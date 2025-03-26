@@ -25,7 +25,7 @@ This project simulates a plasma using the two-fluid theory, specifically focusin
 
 ## Contact
 
-For any issues or questions regarding this project, feel free to contact the developer at::
+For any issues or questions regarding this project, feel free to contact the developer at:
 
 - **Email**: jubeltranr@unal.edu.co
 
